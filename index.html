@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Home · 系统导航</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --card: rgba(255,255,255,.055);
+    --card-border: rgba(255,255,255,.09);
+    --text: #e8ecf5;
+    --muted: #93a0b8;
+    --accent: #a78bfa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box }
+  html { scrollbar-color: #2a3550 transparent }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .aurora {
+    position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(60rem 60rem at 15% -10%, rgba(124,58,237,.28), transparent 55%),
+      radial-gradient(50rem 50rem at 90% 10%, rgba(34,211,238,.16), transparent 50%),
+      radial-gradient(70rem 70rem at 50% 120%, rgba(244,63,94,.12), transparent 55%);
+    animation: drift 26s ease-in-out infinite alternate;
+  }
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1) }
+    100% { transform: translate(-3%, 4%) scale(1.08) }
+  }
+  .grid-overlay {
+    position: fixed; inset: 0; z-index: -1; opacity: .5;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 2.5rem 1.2rem 4rem }
+
+  header { text-align: center; margin-bottom: 2.2rem }
+  .logo {
+    display: inline-flex; align-items: center; gap: .6rem;
+    font-size: 1.9rem; font-weight: 800; letter-spacing: .06em;
+    background: linear-gradient(120deg, #c4b5fd, #7dd3fc, #f9a8d4);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .clock { margin-top: .5rem; color: var(--muted); font-size: .92rem; font-variant-numeric: tabular-nums }
+  .banner {
+    margin: 1.4rem auto 2.4rem; max-width: 34rem;
+    padding: .7rem 1.1rem; border-radius: 12px;
+    background: rgba(250, 204, 21, .08); border: 1px solid rgba(250, 204, 21, .25);
+    color: #fcd34d; font-size: .86rem; line-height: 1.7;
+  }
+  .search {
+    margin: 0 auto 2.2rem; max-width: 26rem; position: relative;
+  }
+  .search input {
+    width: 100%; padding: .75rem 1rem .75rem 2.6rem;
+    border-radius: 999px; border: 1px solid var(--card-border);
+    background: rgba(255,255,255,.06); color: var(--text); font-size: .95rem; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(167,139,250,.18) }
+  .search .mag { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); opacity: .55 }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.1rem }
+  .card {
+    position: relative; display: flex; flex-direction: column; gap: .8rem;
+    padding: 1.35rem 1.35rem 1.2rem;
+    border-radius: 18px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(14px);
+    transition: transform .22s ease, border-color .22s, box-shadow .22s;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; border-radius: 18px; opacity: 0; transition: opacity .25s;
+    background: linear-gradient(135deg, var(--cc, #a78bfa), transparent 60%);
+    z-index: -1;
+  }
+  .card:hover { transform: translateY(-5px); border-color: color-mix(in srgb, var(--cc, #a78bfa) 60%, transparent); box-shadow: 0 16px 40px -18px rgba(0,0,0,.7) }
+  .card:hover::before { opacity: .08 }
+  .card-head { display: flex; align-items: center; gap: .85rem }
+  .icon {
+    width: 46px; height: 46px; flex: none;
+    display: grid; place-items: center;
+    font-size: 1.5rem; border-radius: 13px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 26%, transparent), transparent);
+    border: 1px solid color-mix(in srgb, var(--cc) 35%, transparent);
+  }
+  .card h2 { font-size: 1.15rem; font-weight: 700 }
+  .status {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .72rem; color: var(--muted); margin-left: auto;
+    background: rgba(255,255,255,.06); padding: .22rem .6rem; border-radius: 999px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #64748b }
+  .dot.ok { background: #34d399; box-shadow: 0 0 8px #34d39988 }
+  .dot.bad { background: #f87171; box-shadow: 0 0 8px #f8717188 }
+  .dot.check { animation: blink 1s infinite alternate }
+  @keyframes blink { from { opacity: .25 } to { opacity: 1 } }
+  .desc { color: var(--muted); font-size: .88rem; line-height: 1.75; min-height: 3.4rem }
+  .tags { display: flex; flex-wrap: wrap; gap: .4rem }
+  .tag {
+    font-size: .72rem; padding: .2rem .6rem; border-radius: 999px;
+    color: color-mix(in srgb, var(--cc, #a78bfa) 80%, #fff);
+    background: color-mix(in srgb, var(--cc, #a78bfa) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cc, #a78bfa) 26%, transparent);
+  }
+  .links { display: flex; flex-direction: column; gap: .5rem; margin-top: auto }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: .45rem;
+    padding: .68rem; border-radius: 11px; text-decoration: none;
+    font-size: .9rem; font-weight: 600;
+    background: linear-gradient(135deg, var(--cc, #a78bfa), color-mix(in srgb, var(--cc, #a78bfa) 60%, #6d28d9));
+    color: #fff; transition: filter .2s, transform .15s;
+  }
+  .btn:hover { filter: brightness(1.15); transform: translateY(-1px) }
+  .btn.ghost {
+    background: rgba(255,255,255,.06); color: var(--text);
+    border: 1px solid var(--card-border); font-weight: 500; font-size: .82rem;
+  }
+  .btn .dim { opacity: .7; font-weight: 400 }
+  .github {
+    margin-top: 2.6rem; padding: 1.2rem 1.4rem; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--card-border);
+  }
+  .github h3 { font-size: .92rem; color: var(--muted); margin-bottom: .9rem; font-weight: 600 }
+  .pills { display: flex; flex-wrap: wrap; gap: .6rem }
+  .pill {
+    text-decoration: none; color: var(--text); font-size: .85rem;
+    padding: .45rem .9rem; border-radius: 999px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--card-border);
+    transition: background .2s, border-color .2s;
+  }
+  .pill:hover { background: rgba(255,255,255,.11); border-color: var(--accent) }
+  footer { text-align: center; color: #5b6b86; font-size: .78rem; margin-top: 2.6rem; line-height: 1.8 }
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 2.5rem 0 }
+  @media (max-width: 480px) { .cards { grid-template-columns: 1fr } }
+</style>
+</head>
+<body>
+<div class="aurora"></div>
+<div class="grid-overlay"></div>
+
+<div class="wrap">
+  <header>
+    <div class="logo">🏠 My Home</div>
+    <div class="clock" id="clock"></div>
+    <div class="banner">
+      ⚡ 域名 HTTPS 入口（https://*.jlusall.cloud）已全部部署就绪，待 ICP 备案放行后自动激活。<br>
+      <b>当前请使用「IP 直连」按钮访问</b>，全部服务均可正常使用。
+    </div>
+  </header>
+
+  <div class="search">
+    <span class="mag">🔍</span>
+    <input id="search" type="text" placeholder="搜索系统…（名称 / 功能 / 标签）">
+  </div>
+
+  <section class="cards" id="cards"></section>
+
+  <section class="github">
+    <h3>📦 项目仓库</h3>
+    <div class="pills">
+      <a class="pill" target="_blank" rel="noopener" href="https://github.com/JokeStarsr/cogno">JokeStarsr/cogno</a>
+      <a class="pill" target="_blank" rel="noopener" href="https://github.com/JokeStarsr/getInfo">JokeStarsr/getInfo</a>
+      <a class="pill" target="_blank" rel="noopener" href="https://github.com/JokeStarsr/springAITest">JokeStarsr/springAITest</a>
+      <a class="pill" target="_blank" rel="noopener" href="https://github.com/JokeStarsr/myhome">JokeStarsr/myhome</a>
+    </div>
+  </section>
+
+  <footer>
+    My Home · 个人系统导航 · 部署于 115.159.221.62<br>
+    域名：home.jlusall.cloud（备案放行后生效）
+  </footer>
+</div>
+
+<script>
+const SYSTEMS = [
+  {
+    domain: "https://cogno.jlusall.cloud",
+    ip: "http://115.159.221.62:8090/",
+    name: "Cogno Reader",
+    icon: "📖",
+    color: "#a78bfa",
+    desc: "认知增强阅读伴侣：AI 四代理苏格拉底式陪读、眼动追踪、间隔回顾与理解网格，推动深度思考而非替代思考。",
+    tags: ["AI 阅读", "React", "PWA"],
+    probe: "http://115.159.221.62:8090/"
+  },
+  {
+    domain: "https://bible.jlusall.cloud",
+    ip: "http://115.159.221.62/",
+    name: "Bible 灵修站",
+    icon: "✝️",
+    color: "#fbbf24",
+    desc: "圣经灵修阅读网站：经卷浏览、每日灵修内容，安静沉淀的阅读体验。",
+    tags: ["灵修", "静态站"],
+    probe: "http://115.159.221.62/"
+  },
+  {
+    domain: "https://getinfo.jlusall.cloud",
+    ip: "http://115.159.221.62:8200/",
+    name: "getInfo 信息助手",
+    icon: "🔍",
+    color: "#22d3ee",
+    desc: "信息采集 + AI 智能整理：多引擎网页搜索、热点聚合、豆瓣书评、网易云选歌，AI 生成概览与结构化报告，支持 Word/Excel/PDF 导出。",
+    tags: ["AI 整理", "爬虫", "FastAPI"],
+    probe: "http://115.159.221.62:8200/"
+  },
+  {
+    domain: "https://springai.jlusall.cloud",
+    ip: "http://115.159.221.62:18080/",
+    name: "Spring AI 多Agent",
+    icon: "🤖",
+    color: "#34d399",
+    desc: "Spring AI 多 Agent 协作 + RAG 演示：<br>快慢模型路由、精确 Token 用量计量、多轮会话与知识库问答。",
+    tags: ["多Agent", "RAG", "Spring Boot"],
+    probe: "http://115.159.221.62:18080/"
+  }
+];
+
+const cards = document.getElementById("cards");
+const searchInput = document.getElementById("search");
+
+function render(list) {
+  cards.innerHTML = list.length ? list.map(s => `
+    <article class="card" style="--cc:${s.color}">
+      <div class="card-head">
+        <div class="icon">${s.icon}</div>
+        <h2>${s.name}</h2>
+        <span class="status"><span class="dot" data-key="${s.probe}"></span><span class="st-text">检测中</span></span>
+      </div>
+      <p class="desc">${s.desc}</p>
+      <div class="tags">${s.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+      <div class="links">
+        <a class="btn" href="${s.domain}" target="_blank" rel="noopener">🌐 ${s.domain.replace("https://", "")} <span class="dim">(备案后)</span></a>
+        <a class="btn ghost" href="${s.ip}" target="_blank" rel="noopener">🖥️ IP 直连 <span class="dim">${s.ip.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span></a>
+      </div>
+    </article>
+  `).join("") : `<div class="empty">没有匹配的系统，换个关键词试试 🔍</div>`;
+
+  // 为每个卡片挂状态检测
+  list.forEach(s => {
+    const dot = cards.querySelector(`.dot[data-key="${CSS.escape(s.probe)}"]`);
+    const txt = dot ? dot.nextElementSibling : null;
+    check(s.probe, dot, txt);
+  });
+}
+
+async function check(url, dot, txt) {
+  if (!dot) return;
+  try {
+    await fetch(url, { method: "HEAD", mode: "no-cors", cache: "no-store" });
+    dot.classList.add("ok"); dot.classList.remove("check", "bad");
+    txt.textContent = "在线";
+  } catch {
+    try {
+      await fetch(url, { mode: "no-cors", cache: "no-store" });
+      dot.classList.add("ok"); dot.classList.remove("check", "bad");
+      txt.textContent = "在线";
+    } catch {
+      dot.classList.add("bad"); dot.classList.remove("check", "ok");
+      txt.textContent = "离线";
+    }
+  }
+}
+
+function filter() {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) return render(SYSTEMS);
+  const hit = SYSTEMS.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.desc.toLowerCase().includes(q) ||
+    s.tags.some(t => t.toLowerCase().includes(q)) ||
+    s.domain.includes(q) || s.ip.includes(q)
+  );
+  render(hit);
+}
+
+searchInput.addEventListener("input", filter);
+
+function tick() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  document.getElementById("clock").textContent =
+    ` ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} · ${d.toLocaleDateString("zh-CN", { weekday: "long" })}`;
+  setInterval(tick, 1000);
+}
+
+render(SYSTEMS);
+tick();
+</script>
+</body>
+</html>
