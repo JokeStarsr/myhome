@@ -194,7 +194,7 @@ const SYSTEMS = [
     color: "#a78bfa",
     desc: "认知增强阅读伴侣：AI 四代理苏格拉底式陪读、眼动追踪、间隔回顾与理解网格，推动深度思考而非替代思考。",
     tags: ["AI 阅读", "React", "PWA"],
-    probe: "http://115.159.221.62:8090/"
+    id: "cogno"
   },
   {
     domain: "https://bible.jlusall.cloud",
@@ -204,7 +204,7 @@ const SYSTEMS = [
     color: "#fbbf24",
     desc: "圣经灵修阅读网站：经卷浏览、每日灵修内容，安静沉淀的阅读体验。",
     tags: ["灵修", "静态站"],
-    probe: "http://115.159.221.62/"
+    id: "bible"
   },
   {
     domain: "https://getinfo.jlusall.cloud",
@@ -214,7 +214,7 @@ const SYSTEMS = [
     color: "#22d3ee",
     desc: "信息采集 + AI 智能整理：多引擎网页搜索、热点聚合、豆瓣书评、网易云选歌，AI 生成概览与结构化报告，支持 Word/Excel/PDF 导出。",
     tags: ["AI 整理", "爬虫", "FastAPI"],
-    probe: "http://115.159.221.62:8200/"
+    id: "getinfo"
   },
   {
     domain: "https://springai.jlusall.cloud",
@@ -224,7 +224,7 @@ const SYSTEMS = [
     color: "#34d399",
     desc: "Spring AI 多 Agent 协作 + RAG 演示：<br>快慢模型路由、精确 Token 用量计量、多轮会话与知识库问答。",
     tags: ["多Agent", "RAG", "Spring Boot"],
-    probe: "http://115.159.221.62:18080/"
+    id: "springai"
   },
   {
     domain: "https://kefu.jlusall.cloud",
@@ -234,7 +234,7 @@ const SYSTEMS = [
     color: "#fb7185",
     desc: "智能客服系统 SE for AI：AI 驱动的在线客服与问答接待，会话式客户服务窗口。",
     tags: ["AI", "客服", "Python"],
-    probe: "http://115.159.221.62:8082/"
+    id: "kefu"
   },
   {
     domain: "https://mission.jlusall.cloud",
@@ -244,7 +244,7 @@ const SYSTEMS = [
     color: "#2dd4bf",
     desc: "语音识别平台（Mission）：语音转写与识别服务，独立 HTTPS 入口。",
     tags: ["语音", "Node.js"],
-    probe: "http://115.159.221.62:8088/"
+    id: "mission"
   }
 ];
 
@@ -257,7 +257,7 @@ function render(list) {
       <div class="card-head">
         <div class="icon">${s.icon}</div>
         <h2>${s.name}</h2>
-        <span class="status"><span class="dot" data-key="${s.probe}"></span><span class="st-text">检测中</span></span>
+        <span class="status"><span class="dot" data-key="${s.id}"></span><span class="st-text">检测中</span></span>
       </div>
       <p class="desc">${s.desc}</p>
       <div class="tags">${s.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
@@ -268,29 +268,30 @@ function render(list) {
     </article>
   `).join("") : `<div class="empty">没有匹配的系统，换个关键词试试 🔍</div>`;
 
-  // 为每个卡片挂状态检测
-  list.forEach(s => {
-    const dot = cards.querySelector(`.dot[data-key="${CSS.escape(s.probe)}"]`);
-    const txt = dot ? dot.nextElementSibling : null;
-    check(s.probe, dot, txt);
-  });
-}
+  }
 
-async function check(url, dot, txt) {
-  if (!dot) return;
+async function pollStatus() {
   try {
-    await fetch(url, { method: "HEAD", mode: "no-cors", cache: "no-store" });
-    dot.classList.add("ok"); dot.classList.remove("check", "bad");
-    txt.textContent = "在线";
+    const res = await fetch("status.json?v=" + Date.now(), { cache: "no-store" });
+    const data = await res.json();
+    SYSTEMS.forEach(s => {
+      const dot = cards.querySelector(`.dot[data-key="${s.id}"]`);
+      const txt = dot ? dot.nextElementSibling : null;
+      if (!dot) return;
+      const st = data[s.id] || "unknown";
+      if (st === "down") {
+        dot.classList.add("bad"); dot.classList.remove("check", "ok");
+        txt.textContent = "离线";
+      } else if (st === "ok") {
+        dot.classList.add("ok"); dot.classList.remove("check", "bad");
+        txt.textContent = "在线";
+      } else {
+        dot.classList.remove("ok", "bad", "check");
+        txt.textContent = "未知";
+      }
+    });
   } catch {
-    try {
-      await fetch(url, { mode: "no-cors", cache: "no-store" });
-      dot.classList.add("ok"); dot.classList.remove("check", "bad");
-      txt.textContent = "在线";
-    } catch {
-      dot.classList.add("bad"); dot.classList.remove("check", "ok");
-      txt.textContent = "离线";
-    }
+    // 状态文件暂不可读：保持现状，下轮再试
   }
 }
 
@@ -317,6 +318,8 @@ function tick() {
 }
 
 render(SYSTEMS);
+pollStatus();
+setInterval(pollStatus, 60000);
 tick();
 </script>
 </body>
